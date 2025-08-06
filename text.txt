@@ -1,4 +1,4 @@
-greatstack lms video endned: 6:50:43
+greatstack lms video endned: 9:06:12
 
 backend pakages
 npm i express nodemon dotenv cors cloudinary mongoose multer stripe svix@1.42.0 @clerk/express
