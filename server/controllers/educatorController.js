@@ -70,7 +70,7 @@ export const educatorDashboardData = async (req ,res)=>{
 
     //  calculate toatl eranings from  purcahsed
         const purchases = await Purchase.find({
-            courseIds: {$in: courseIds},
+            courseId: {$in: courseIds},
             status: 'completed'
         });
 
@@ -91,7 +91,7 @@ export const educatorDashboardData = async (req ,res)=>{
             });
         }
 
-        res.json({scucess: true, dashboardData: {
+        res.json({success: true, dashboardData: {
             totalEarnings, enrolledStudentsData, totalCourses
         }})
     } catch (error) {
