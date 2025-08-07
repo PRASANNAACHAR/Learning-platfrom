@@ -64,11 +64,19 @@ useEffect(() => {
   fetchCourseData()
 }, [])
 
+// useEffect(() => {
+//  if(userData && courseData) {
+//   setIsAlreadyEnrolled(userData.enrolledCourse.includes(courseData._id))
+//  }
+// }, [userData, courseData])
+
+
 useEffect(() => {
- if(userData && courseData) {
-  setIsAlreadyEnrolled(userData.enrolledCourse.includes(courseData._id))
- }
-}, [userData, courseData])
+  if (userData?.enrolledCourse && courseData?._id) {
+    setIsAlreadyEnrolled(userData.enrolledCourse.includes(courseData._id));
+  }
+}, [userData, courseData]);
+
 
   const toggleSection = (index) => {
     setOpenSections((prev) => (
@@ -116,6 +124,7 @@ useEffect(() => {
                       <p className='font-medium md:text-base text-sm'>{chapter.chapterTitle}</p>
                     </div>
                     <p className='text-sm d:text-default'>{chapter.chapterContent.length} lectures - {calculateChapterTime(chapter)}</p>
+
                   </div>
 
                   <div className={`overflow-hidden transition-all duration-300 ${openSections[index] ? 'max-h-96' : 'max-h-0'}`}>
