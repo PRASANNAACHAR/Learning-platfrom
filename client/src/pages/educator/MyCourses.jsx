@@ -28,9 +28,7 @@ const MyCourses = () => {
   useEffect(()=>{
     if (isEducator) {
       fetchEducatorCourses()
-    }else{
-      setCourses([]) 
-    }
+    }else
   },[isEducator])
 
   return courses ? (
