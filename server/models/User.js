@@ -6,11 +6,13 @@ const UserSchema = new mongoose.Schema(
         email: {type: String, required: true},
         imageUrl: {type: String, required: true},
         enrolledCourses: [
-            {type: mongoose.Schema.Types.ObjectId,
+            {
+                type: mongoose.Schema.Types.ObjectId,
                 ref: 'Course'
             }
         ],
-    }, {timestamps: true});
+    }, {timestamps: true}
+);
 
 
     const User = mongoose.model('User', UserSchema);
