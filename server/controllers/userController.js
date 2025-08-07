@@ -150,8 +150,8 @@ export const addUserRating =async (req , res) =>{
 
      const user = await User.findById(userId);
 
-     if (!user || user.enrolledCourses.includes(courseId)) {
-          return res.json({success: false, message: 'Usern has not purchased this course.'});
+     if (!user || !user.enrolledCourses.includes(courseId)) {
+          return res.json({success: false, message: 'User has not purchased this course.'});
      }
 
      const existingRatingIndex = course.courseRatings.findIndex( r => r.userId === userId) 
