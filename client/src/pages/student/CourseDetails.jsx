@@ -37,79 +37,32 @@ const backendURL = import.meta.env.VITE_BACKEND_URL;
   }
 
 // this is stripe payment gateway logic
-// const enrollCourse = async ()=>{
-//   try {
-//     if (!userData) {
-//     return toast.warn('Login to Enroll')
-//     }
-//     if (isAlreadyEnrolled) {
-//       return toast.warn('Already Enrolled')
-//     }
+const enrollCourse = async ()=>{
+  try {
+    if (!userData) {
+    return toast.warn('Login to Enroll')
+    }
+    if (isAlreadyEnrolled) {
+      return toast.warn('Already Enrolled')
+    }
 
    
-//     const token = await getToken();
-//     const {data} = await axios.post(backendUrl + '/api/user/purchase', {courseId: courseData._id},{headers: {Authorization: `Bearer ${token}`}})
-
-//     if (data.success) {
-//       const {session_url } = data
-//       window.location.replace(session_url)
-//     }else{
-//       toast.error(data.message)
-//     }
-
-//   } catch (error) {
-//       toast.error(error.message)
-//   }
-// }
-
-
-// razorpay payment gateway logic 
-const enrollCourse = async () => {
-  try {
-    if (!userData) return toast.warn('Login to Enroll');
-    if (isAlreadyEnrolled) return toast.warn('Already Enrolled');
-
     const token = await getToken();
-    const { data } = await axios.post(
-      backendUrl + '/api/user/purchase',
-      { courseId: courseData._id },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const {data} = await axios.post(backendUrl + '/api/user/purchase', {courseId: courseData._id},{headers: {Authorization: `Bearer ${token}`}})
 
     if (data.success) {
-      const options = {
-        key: data.key_id, // RAZORPAY_KEY_ID from backend
-        amount: data.amount, // in paise (not rupees)
-        currency: "INR",
-        name: "Edemy",
-        description: courseData.courseTitle,
-        image: "/favicon.svg",
-        order_id: data.order_id,
-        handler: function (response) {
-          // OPTIONAL: You can confirm payment success here
-          toast.success("Payment successful!");
-          // Reload or redirect
-          window.location.reload();
-        },
-        prefill: {
-          name: userData.name,
-          email: userData.email,
-        },
-        theme: {
-          color: "#0f172a",
-        },
-      };
-
-      const razor = new window.Razorpay(options);
-      razor.open();
-    } else {
-      toast.error(data.message);
-      
+      const {session_url } = data
+      window.location.replace(session_url)
+    }else{
+      toast.error(data.message)
     }
+
   } catch (error) {
-    toast.error(error.message);
+      toast.error(error.message)
   }
-};
+}
+
+
 
 
 
