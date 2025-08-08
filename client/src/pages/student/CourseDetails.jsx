@@ -14,7 +14,7 @@ const CourseDetails = () => {
   const { id } = useParams()
   const [courseData, setCourseData] = useState(null)
   const [openSections, setOpenSections] = useState({})
-  const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+ 
 const backendURL = import.meta.env.VITE_BACKEND_URL;
 
   const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false)
