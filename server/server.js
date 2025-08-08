@@ -8,7 +8,7 @@ import { clerkMiddleware } from '@clerk/express';
 import connectCloudinary from './configs/cloudinary.js';
 import courseRouter from './routes/courseRoutes.js';
 import userRouter from './routes/userRoutes.js';
-import { razorpayWebhooks } from './controllers/webhooks.js';
+import { clerkWebhooks,razorpayWebhooks } from './controllers/webhooks.js';
 
 
 // initialize express
