@@ -7,7 +7,6 @@
   "scripts": {
     "server": "nodemon server.js",
     "start": "node server.js"
-    
   },
   "keywords": [],
   "author": "",
@@ -21,6 +20,7 @@
     "mongoose": "^8.17.0",
     "multer": "^2.0.2",
     "nodemon": "^3.1.10",
+    "razorpay": "^2.9.6",
     "stripe": "^18.4.0",
     "svix": "^1.42.0"
   }

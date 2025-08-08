@@ -1,8 +1,9 @@
-import Stripe from "stripe"
+// import Stripe from "stripe"
 import Course from "../models/Course.js"
 import { Purchase } from "../models/Purchase.js"
 import User from "../models/User.js"
 import { CourseProgress } from "../models/CourseProgress.js"
+import Razorpay from 'razorpay'
 
 // get user data
 export const getUserData = async (req, res) => {
@@ -34,58 +35,117 @@ export const userEnrolledCourses = async (req, res) => {
 }
 
 
-// purchase course 
-export const purchaseCourse = async (req ,res) =>{
+// purchase course stripe payment
+// export const purchaseCourse = async (req ,res) =>{
+//   try {
+//     const {courseId} = req.body
+//     const {origin} = req.headers
+//     const userId = req.auth.userId
+//     const userData = await User.findById(userId)
+//     const courseData = await Course.findById(courseId)
+
+//     if (!userData || !courseData) {
+//         return res.json({success :false, message: 'Data Not Found'})
+//     }
+
+//     const purchaseData ={
+//         courseId: courseData._id,
+//         userId,
+//         amount: (courseData.coursePrice - courseData.discount * courseData.coursePrice / 100).toFixed(2),
+//     }
+
+//     const newPurchase = await Purchase.create(purchaseData)
+
+//     // stripe getway initialize
+//     const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY)
+
+//     const currency = process.env.CURRENCY.toLocaleLowerCase()
+
+// //     creating line items to for stripe
+// const line_items = [{
+//      price_data: {
+//           currency,
+//           product_data: {
+//                name: courseData.courseTitle
+//           },
+//           unit_amount: Math.floor(newPurchase.amount) * 100
+//      },
+//      quantity: 1
+// }]
+
+// const session = await stripeInstance.checkout.sessions.create({
+//      success_url: `${origin}/loading/my-enrollments`,
+//      cancel_url: `${origin}/`,
+//      line_items: line_items,
+//      mode: 'payment',
+//      metadata: {
+//           purchaseId: newPurchase._id.toString()
+//      }
+// })
+
+// res.json({success: true, session_url: session.url})
+
+//   } catch (error) {
+//     res.json({success: false ,message: error.message})
+//   }
+// }
+
+
+// razorpay initilize real-payment gateway
+export const purchaseCourse = async (req, res) => {
   try {
-    const {courseId} = req.body
-    const {origin} = req.headers
+    const { courseId } = req.body
+    const { origin } = req.headers
     const userId = req.auth.userId
+
     const userData = await User.findById(userId)
     const courseData = await Course.findById(courseId)
 
     if (!userData || !courseData) {
-        return res.json({success :false, message: 'Data Not Found'})
+      return res.json({ success: false, message: 'Data Not Found' })
     }
 
-    const purchaseData ={
-        courseId: courseData._id,
-        userId,
-        amount: (courseData.coursePrice - courseData.discount * courseData.coursePrice / 100).toFixed(2),
+    const amount = (courseData.coursePrice - courseData.discount * courseData.coursePrice / 100).toFixed(2)
+
+    const purchaseData = {
+      courseId: courseData._id,
+      userId,
+      amount,
     }
 
     const newPurchase = await Purchase.create(purchaseData)
 
-    // stripe getway initialize
-    const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY)
+    // 🔁 RAZORPAY GATEWAY INITIALIZATION
+    const razorpayInstance = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    })
 
-    const currency = process.env.CURRENCY.toLocaleLowerCase()
+    const currency = process.env.CURRENCY.toLowerCase()
 
-//     creating line items to for stripe
-const line_items = [{
-     price_data: {
-          currency,
-          product_data: {
-               name: courseData.courseTitle
-          },
-          unit_amount: Math.floor(newPurchase.amount) * 100
-     },
-     quantity: 1
-}]
+    const options = {
+      amount: Math.floor(newPurchase.amount * 100), // in paise
+      currency,
+      receipt: newPurchase._id.toString(),
+      notes: {
+        courseTitle: courseData.courseTitle,
+        userId: userId,
+      },
+    }
 
-const session = await stripeInstance.checkout.sessions.create({
-     success_url: `${origin}/loading/my-enrollments`,
-     cancel_url: `${origin}/`,
-     line_items: line_items,
-     mode: 'payment',
-     metadata: {
-          purchaseId: newPurchase._id.toString()
-     }
-})
+    const order = await razorpayInstance.orders.create(options)
 
-res.json({success: true, session_url: session.url})
+    res.json({
+      success: true,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      purchaseId: newPurchase._id,
+      key: process.env.RAZORPAY_KEY_ID, // needed on frontend
+    })
 
   } catch (error) {
-    res.json({success: false ,message: error.message})
+    res.json({ success: false, message: error.message })
   }
 }
 
