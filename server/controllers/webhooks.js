@@ -137,7 +137,7 @@ export const clerkWebhooks = async (req, res)=> {
 
 export const razorpayWebhooks = async (request, response) => {
   const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
-
+  
   const signature = request.headers['x-razorpay-signature'];
   const body = JSON.stringify(request.body);
 
@@ -147,61 +147,63 @@ export const razorpayWebhooks = async (request, response) => {
     .digest('hex');
 
   if (signature !== expectedSignature) {
+    console.warn('❌ Invalid Razorpay webhook signature');
     return response.status(400).json({ error: 'Invalid webhook signature' });
   }
 
-  const event = request.body.event;
-  const payload = request.body.payload;
+  const { event, payload } = request.body;
 
   try {
-    switch (event) {
-      case 'payment.captured': {
-        const payment = payload.payment.entity;
-        const purchaseId = payment.notes?.purchaseId;
+    if (!payload || !payload.payment || !payload.payment.entity) {
+      return response.status(400).json({ error: 'Invalid payload structure' });
+    }
 
-        if (!purchaseId) {
-          return response.status(400).json({ error: 'Missing purchaseId in notes' });
-        }
+    const payment = payload.payment.entity;
+    const purchaseId = payment.notes?.purchaseId;
 
-        const purchaseData = await Purchase.findById(purchaseId);
-        const userData = await User.findById(purchaseData.userId);
-        const courseData = await Course.findById(purchaseData.courseId.toString());
+    if (!purchaseId) {
+      return response.status(400).json({ error: 'Missing purchaseId in notes' });
+    }
 
-        courseData.enrolledStudents.push(userData);
+    const purchaseData = await Purchase.findById(purchaseId);
+    if (!purchaseData) {
+      return response.status(404).json({ error: 'Purchase not found' });
+    }
+
+    if (event === 'payment.captured') {
+      const userData = await User.findById(purchaseData.userId);
+      const courseData = await Course.findById(purchaseData.courseId.toString());
+
+      if (!userData || !courseData) {
+        return response.status(404).json({ error: 'User or Course not found' });
+      }
+
+      // Avoid duplicates
+      if (!courseData.enrolledStudents.includes(userData._id)) {
+        courseData.enrolledStudents.push(userData._id);
         await courseData.save();
+      }
 
+      if (!userData.enrolledCourses.includes(courseData._id)) {
         userData.enrolledCourses.push(courseData._id);
         await userData.save();
-
-        purchaseData.status = 'completed';
-        await purchaseData.save();
-
-        break;
       }
 
-      case 'payment.failed': {
-        const payment = payload.payment.entity;
-        const purchaseId = payment.notes?.purchaseId;
+      purchaseData.status = 'completed';
+      await purchaseData.save();
 
-        if (!purchaseId) {
-          return response.status(400).json({ error: 'Missing purchaseId in notes' });
-        }
+    } else if (event === 'payment.failed') {
+      purchaseData.status = 'failed';
+      await purchaseData.save();
 
-        const purchaseData = await Purchase.findById(purchaseId);
-        purchaseData.status = 'failed';
-        await purchaseData.save();
-
-        break;
-      }
-
-      default:
-        console.log(`Unhandled event: ${event}`);
+    } else {
+      console.log(`Unhandled event type: ${event}`);
     }
 
     return response.status(200).json({ received: true });
 
-  } catch (err) {
-    console.error('Webhook processing error:', err);
+  } catch (error) {
+    console.error('Webhook processing error:', error);
     return response.status(500).json({ error: 'Internal server error' });
   }
 };
